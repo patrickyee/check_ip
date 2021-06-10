@@ -1,3 +1,4 @@
+import argparse
 import smtplib
 import subprocess
 
@@ -20,7 +21,7 @@ def send_email(subject, body):
     s.sendmail(LOGIN_USER, TO_ADDRESS, f'Subject: {subject}\n{body}')
 
 
-def run():
+def run(report_mode=False):
     shell_output = subprocess.run(COMMAND, capture_output=True)
     if shell_output.returncode != 0:
         send_email(SUBJECT + ' Failed', shell_output.stderr.decode('UTF-8'))
@@ -31,7 +32,12 @@ def run():
 
     if EXPECTED_IP != current_ip:
         send_email(SUBJECT, f'IP changed from {EXPECTED_IP} to {current_ip}')
+    elif report_mode:
+        send_email(SUBJECT, f'IP remained at {current_ip}')
 
 
 if __name__ == '__main__':
-    run()
+    parser = argparse.ArgumentParser(description='Detect IP change')
+    parser.add_argument('--report', dest='report_mode', action='store_true', help='Send report email')
+    args = parser.parse_args()
+    run(report_mode=args.report_mode)
